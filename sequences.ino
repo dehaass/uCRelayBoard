@@ -15,12 +15,15 @@ void nextState(){
       invertStates();
       printStates();
       break;
+
+    case 3:
+      break;
   }
 }
 
 void changeSEQ(){
   SEQ++;
-  if(SEQ >= 3) SEQ = 0;
+  if(SEQ >= 4) SEQ = 0;
 
   switch(SEQ){
     case 0:
@@ -34,6 +37,10 @@ void changeSEQ(){
     
     case 2:
       fill(1);
+      break;
+
+    case 3:
+      fill(0);
       break;
       
     default:

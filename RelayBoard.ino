@@ -17,6 +17,9 @@ const int OUTPUT_PINS[] = {9,8,7,6,5,4,3,A5}; // Maps physical pins to the STATE
 const int BUTTON_PIN = 2; // Pin used for the button (PIN 2 has an interupt thats why I'm using it)
 const int POT_PIN = A4;
 const int SWITCH_PIN = A3;
+const int JOYSTICK_HORZ_PIN = A1;
+const int JOYSTICK_VERT_PIN = A2;
+
 
 // Global info for sequences/patterns
 int SEQ = 0; // The current sequence
@@ -24,7 +27,7 @@ int SEQ = 0; // The current sequence
 unsigned int BEATS[5] = {500,500,500,500,500}; // holds temporary values from button to calculate period
 int INDEX = 0; // Used to index the BEATS array
 int PERIOD = 500; // Sequence period. The speed we move through the pattern.
-unsigned long NEXT_STEP_TIME = 500; // When to make the next change. Compared to the system clock.
+unsigned long BUTT_NEXT_STEP_TIME = 500; // When to make the next change. Compared to the system clock.
 int PRESCALER = 1; // Can be used to slow the period
 
 // Global variables related to the button
@@ -43,6 +46,8 @@ void setup() {
   pinMode(BUTTON_PIN, INPUT);
   pinMode(POT_PIN, INPUT);
   pinMode(SWITCH_PIN, INPUT);
+  pinMode(JOYSTICK_HORZ_PIN, INPUT);
+  pinMode(JOYSTICK_VERT_PIN, INPUT);
   // Attach an interrupt to the button pin. When a rising edge is detected, sends the program to buttonCatch_ISR
   attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonCatch_ISR, RISING);
   //fill(1);
@@ -124,26 +129,29 @@ void buttonLogic(){
     
     if(duration > 2000){ // If it's been too long between pulses, reset the array and discard
         INDEX = 0; 
-    }else if(duration > 100){ // discard pulses that are too fast (mechanical relays ya know?)
+    }else if(duration > 50){ // discard pulses that are too fast (mechanical relays ya know?)
 
       BEATS[INDEX] = duration;
       INDEX++;
       if(INDEX >= 5){ // if we have 5 good duration values
         int i;
-        unsigned long temp = 0;
+        PERIOD = 0;
         for(i = 0; i<5; i++){
-          temp += BEATS[i];
+          PERIOD += BEATS[i];
         }
-        PERIOD = temp/5; // Set the system period to the average of the 5 readings
+        PERIOD = PERIOD/5; // Set the system period to the average of the 5 readings
         INDEX = 0;
-        NEXT_STEP_TIME = recentPressTime + PERIOD*PRESCALER; // Set the next output to change on the beat.
+        BUTT_NEXT_STEP_TIME = millis() + PERIOD*PRESCALER - DEBOUNCE_TIME;
+        Serial.print("Tempo: ");
+        Serial.println(60.0/(float(PERIOD)/1000.0));
       }
     }
 //    Serial.println(duration);
 //    Serial.print("Period: ");
 //    Serial.println(PERIOD);
+
 //    Serial.print("Next Check Time: ");
-//    Serial.println(NEXT_STEP_TIME);
+//    Serial.println(BUTT_NEXT_STEP_TIME);
 //    Serial.print("Millis: ");
 //    Serial.println(millis());
   }else if(digitalRead(BUTTON_PIN) == HIGH){
@@ -155,17 +163,85 @@ void buttonLogic(){
   NEXT_CHECK_TIME = millis() + BUTTON_HOLD_TIME;
 }
 
+int readJoystick(){
+  int joyHorz, joyVert;
+  byte joyState = 0b00000000;
+  
+  joyHorz = analogRead(JOYSTICK_HORZ_PIN);
+  joyVert = analogRead(JOYSTICK_VERT_PIN);
+  if(joyHorz > 768){
+    joyState = joyState | 0b00000001;
+  }else if(joyHorz < 256){
+    joyState = joyState | 0b00000010;
+  }
+  
+  if(joyVert > 768){
+    joyState = joyState | 0b00000100;
+  }else if(joyVert < 256){
+    joyState = joyState | 0b00001000;
+  }
+
+  switch(joyState){
+    case 0:
+      joyState = 13; // discard value
+      break;
+    case 4:
+      joyState = 0;
+      break;
+    case 5:
+      joyState = 1;
+      break;
+    case 1:
+      joyState = 2;
+      break;
+    case 9:
+      joyState = 3;
+      break;
+    case 8:
+      joyState = 4;
+      break;
+    case 10:
+      joyState = 5;
+      break;
+    case 2:
+      joyState = 6;
+      break;
+    case 6:
+      joyState = 7;
+      break;
+    default:
+      joyState = 0;
+      break;
+  }
+  
+  Serial.println(joyState);
+  return joyState;
+}
+
 void loop() {
+  static unsigned long POT_NEXT_STEP_TIME = 0;
+
   if(millis() > NEXT_CHECK_TIME) buttonLogic();
-  if(millis() > NEXT_STEP_TIME){
-    if(digitalRead(SWITCH_PIN) == HIGH){
-      int potVal = analogRead(A4);
-      NEXT_STEP_TIME = millis() + (potVal * (1900.0 / 1023.0)) + 50;
-      Serial.println(NEXT_STEP_TIME);
-    }else{
-      NEXT_STEP_TIME = millis() + PERIOD*PRESCALER;
+
+  if(millis() > BUTT_NEXT_STEP_TIME){
+    BUTT_NEXT_STEP_TIME = millis() + PERIOD*PRESCALER;
+    if(digitalRead(SWITCH_PIN) == LOW) nextState();
+  }
+
+  if(millis() > POT_NEXT_STEP_TIME){
+    int potVal = analogRead(A4);
+    POT_NEXT_STEP_TIME = millis() + (potVal * (1900.0 / 1023.0)) + 50;
+    if(digitalRead(SWITCH_PIN) == HIGH) nextState();
+  }
+
+  if(SEQ == 3){
+    int joyState = readJoystick();
+    if(joyState != 13){
+      fill(0);
+      STATES[joyState] = 1;
+      printStates();
+      delay(50);      
     }
-    nextState();
   }
 
 }
