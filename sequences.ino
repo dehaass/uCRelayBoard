@@ -1,5 +1,4 @@
 void nextState(){
-    //static NEXT_SEQ_TIME = 0;
     int seq = SEQ_MAP[SEQ];
 
   switch(seq){
@@ -39,9 +38,9 @@ void nextState(){
         break;
 
     case 7:
-        AUTO_LIGHTS_FLAG = true;
-        SEQ = random(0,6);
-        nextState();
+        //AUTO_LIGHTS_FLAG = true;
+        //SEQ = random(1,7);
+        //nextState();
         break;
 
     default:
@@ -91,8 +90,13 @@ void changeSEQ(){
         break;
 
     case 7:
-        fill(0);
-        break;
+        //fill(0);
+       AUTO_LIGHTS_FLAG = true;
+       SEQ = random(1,7);
+       PRIME_MODE = random(0,2);
+       //Serial.println(SEQ);
+       changeSEQ();
+        return;
 
     case 8:
         break;
