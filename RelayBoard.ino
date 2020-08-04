@@ -13,7 +13,7 @@
 */
 
 // Global variables for holding information about outputs
-const int NUM_CH = 5; // number of chanels to use.
+const int NUM_CH = 7; // number of chanels to use.
 int STATES[] = {1, 1, 1, 1, 1, 1, 1, 1}; // holds the state of the relay outputs
 int PTR = STATES[8]; // points at the array of states
 const int OUTPUT_PINS[] = {9, 8, 7, 6, 5, 4, 3, A5}; // Maps physical pins to the STATES array
@@ -320,7 +320,7 @@ void loop() {
   }
 
   if (millis() > POT_NEXT_STEP_TIME) {
-    POT_NEXT_STEP_TIME = millis() + (analogRead(POT_PIN) * (1950.0 / 1023.0)) + 50;
+    POT_NEXT_STEP_TIME = millis() + (analogRead(POT_PIN) * (1950.0 / 1023.0)) + 20;
     if (MODE == 0 && digitalRead(SWITCH_PIN) == HIGH) nextState();
   }
 
