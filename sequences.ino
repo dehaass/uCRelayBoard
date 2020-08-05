@@ -1,13 +1,16 @@
+// Steps through the states of the SEQ
 void nextState(){
+    // Uses the SEQ_MAP to lookup the SEQ location on the joystick mapping
     int seq = SEQ_MAP[SEQ];
 
+  // TODO name the sequences
   switch(seq){
     case 0:
       invertStates();
       printStates();
       break;
       
-    case 1:
+    case 1: 
       chase(PRIME_MODE);
       printStates();
       break;
@@ -49,11 +52,11 @@ void nextState(){
   }
 }
 
+// Does the setup for when we change the SEQ type
 void changeSEQ(){
-//  SEQ++;
-//  if(SEQ >= 4) SEQ = 0;
     int seq = SEQ_MAP[SEQ];
 
+  // TODO name the sequences
   switch(seq){
     case 0:
       alternate(0);
@@ -90,13 +93,11 @@ void changeSEQ(){
         break;
 
     case 7:
-        //fill(0);
        AUTO_LIGHTS_FLAG = true;
        SEQ = random(1,7);
        PRIME_MODE = random(0,2);
-       //Serial.println(SEQ);
        changeSEQ();
-        return;
+       return;
 
     case 8:
         break;
