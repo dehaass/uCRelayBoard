@@ -28,10 +28,10 @@
 */
 
 int clockPin = 2;    // select the input pin for the potentiometer
-int ledPin = 13;      // select the pin for the LED
-int sensorValue = 0;  // variable to store the value coming from the sensor
 unsigned int clockCount = 0;
 unsigned int currMillis = 0;
+
+int analogPin = A7;
 
 void setup() {
   // declare the ledPin as an OUTPUT:
@@ -44,15 +44,19 @@ void setup() {
 
 void loop() {
   // read the value from the sensor:
-  unsigned int PPS = 0;
-  delay(1);
-  if(clockCount > 100){
+
+  //Serial.println(analogRead(analogPin));
+  
+  float BPM = 0;
+  //delay(1);
+  if(clockCount > 16){
+    BPM = ((float)clockCount / ((float)(millis() - currMillis)/1000.0/60.0)/4.0);
+    Serial.print("BPM = ");
+    Serial.println(BPM);
     currMillis = millis();
     clockCount = 0;
-    PPS = clockCount / ((millis() - currMillis)/1000);
-    Serial.print("PPS = ");
-    Serial.println(PPS);
   }
+ // Serial.println(clockCount);
 }
 
 void countInterrupt(){
